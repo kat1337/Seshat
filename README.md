@@ -46,10 +46,10 @@ data/raw/
 # 1. Process and clean raw data
 make ingest
 
-# 2. (Optional) OCR scanned documents
+# 2. (Optional) OCR scanned documents, please rememeber to use/train the right OCR model for your specific language
 make ocr
 
-# 3. (Optional) Transcribe audio
+# 3. (Optional) Transcribe audio // same as with OCR this will require a transcription model trained for your specific language/speaker
 make transcribe
 
 # 4. Align parallel sentences
