@@ -1,0 +1,96 @@
+# Language Configuration Template
+# Copy this file and fill in the details for your target language
+# Save as: configs/languages/{language_code}.yaml
+
+language:
+  # ISO 639-3 code if available, otherwise a descriptive code
+  code: "xxx"
+  name: "Language Name"
+  
+  # The language the source materials are translated to/from
+  bridge_language: "es"        # ISO 639-1 code (es=Spanish, en=English, pt=Portuguese)
+  bridge_language_name: "Spanish"
+  
+  # Language family information (helps with cross-lingual transfer)
+  family: "Language Family"    # e.g., "Tupian", "Arawakan", "Panoan", "Quechuan"
+  subfamily: ""                # e.g., "Tupi-Guarani"
+  region: "South America"
+  
+  # Writing system
+  script: "Latin"              # Latin, Cyrillic, Devanagari, etc.
+  has_standard_orthography: false  # Is there an agreed-upon spelling system?
+  orthography_notes: |
+    Notes about the writing system, special characters, diacritics, 
+    variant spellings, etc.
+
+  # Linguistic features (fill in what you know — helps guide training)
+  typology:
+    word_order: "SOV"          # SOV, SVO, VSO, VOS, OVS, OSV, or "free"
+    morphology: "agglutinative"  # isolating, agglutinative, fusional, polysynthetic
+    head_direction: "head-final"  # head-initial, head-final, mixed
+    tone: false                # Is it a tonal language?
+    ergativity: false          # Ergative-absolutive alignment?
+    noun_classes: false        # Grammatical gender or noun classes?
+    notes: |
+      Any additional typological notes.
+
+data:
+  # Paths are relative to data/raw/
+  dictionary:
+    path: "dictionary/"
+    format: "csv"              # csv, json, txt
+    # For CSV: expected columns
+    columns:
+      source: "headword"       # Column with target language word
+      target: "translation"    # Column with bridge language translation
+      pos: "part_of_speech"    # Part of speech (optional)
+      example: "example"       # Example sentence (optional)
+      notes: "notes"           # Additional notes (optional)
+    encoding: "utf-8"
+    separator: ","
+    estimated_entries: 10000
+
+  parallel_texts:
+    path: "parallel_texts/"
+    format: "aligned"          # aligned (one-to-one), bitext, interlinear
+    # For aligned format: pairs of files with matching line numbers
+    source_suffix: ".src"      # Target language files
+    target_suffix: ".tgt"      # Bridge language files
+    estimated_sentences: 20000
+
+  transcriptions:
+    path: "transcriptions/"
+    format: "txt"              # txt, docx, pdf
+    # Monolingual texts in the target language
+    estimated_pages: 500
+    
+  scans:
+    path: "scans/"
+    format: "mixed"            # png, jpg, pdf
+    estimated_pages: 0         # Fill in after inventory
+    ocr_language: "spa"        # Tesseract language code for bridge language content
+    needs_manual_review: true
+
+  audio:
+    path: "audio/"
+    format: "mixed"            # wav, mp3, flac
+    estimated_hours: 0         # Fill in after inventory
+    has_transcriptions: false  # Do the audio files already have text transcriptions?
+
+# System prompts for each training phase
+prompts:
+  translator: |
+    You are an expert translator specializing in {name}. You provide accurate 
+    translations between {name} and {bridge_language_name}, maintaining the 
+    meaning and nuance of the original text.
+  
+  analyst: |
+    You are a linguist specializing in {name}, a {family} language from {region}. 
+    You analyze texts by providing translations, morpheme-by-morpheme glosses, 
+    and grammatical explanations. You help researchers understand the structure 
+    and patterns of {name}.
+  
+  generator: |
+    You are fluent in {name}. You can produce natural text in {name} on various 
+    topics, and you can explain your word choices and grammatical constructions 
+    when asked.

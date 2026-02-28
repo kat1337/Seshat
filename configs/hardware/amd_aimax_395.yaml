@@ -1,0 +1,35 @@
+# Hardware-specific overrides for AMD AI MAX+ 395 (128GB unified memory)
+# These override values in base_qlora.yaml
+
+hardware:
+  name: "AMD AI MAX+ 395"
+  unified_memory_gb: 128
+  gpu_type: "RDNA 3.5 iGPU"
+  rocm_version: "6.2+"  # Verify with rocm-smi
+
+# Memory-conservative settings for unified memory
+# The OS + model + gradients + optimizer states all share the 128GB
+# Budget: ~50GB model (4-bit 80B) + ~20GB training overhead + ~30GB OS/buffer
+training:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  gradient_checkpointing: true
+  optim: "paged_adamw_8bit"
+  bf16: true
+  dataloader_num_workers: 2    # Don't over-parallelize on shared memory
+  max_seq_length: 1024         # Reduce if OOM; increase if stable
+
+# If using the 32B model instead, you have more headroom:
+# training:
+#   per_device_train_batch_size: 2
+#   gradient_accumulation_steps: 8
+#   max_seq_length: 2048
+
+# ROCm-specific notes:
+# - Install PyTorch ROCm: pip install torch --index-url https://download.pytorch.org/whl/rocm6.2
+# - Verify GPU detected: python -c "import torch; print(torch.cuda.is_available())"  
+#   (ROCm uses the CUDA compatibility layer, so torch.cuda functions work)
+# - Monitor memory: watch -n1 rocm-smi
+# - If bitsandbytes fails, try: pip install bitsandbytes --prefer-binary
+#   or use the GPTQ fallback path in seshat
+# - Flash Attention 2 may not be available on RDNA 3.5 — use sdpa instead

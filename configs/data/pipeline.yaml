@@ -1,0 +1,108 @@
+# Data processing pipeline configuration
+
+inherit: "../base.yaml"
+
+ingest:
+  # Supported input formats for each data type
+  dictionary:
+    input_dir: "data/raw/dictionary"
+    formats: ["csv", "json", "txt", "xlsx"]
+    # Column mapping (adjust to your dictionary format)
+    columns:
+      headword: "headword"           # Column/field name for the target language word
+      definition: "definition"        # Column/field for the source language definition
+      pos: "part_of_speech"          # Part of speech (optional)
+      examples: "examples"           # Example sentences (optional)
+      notes: "notes"                 # Linguistic notes (optional)
+    output: "data/processed/dictionary_entries"
+
+  parallel_texts:
+    input_dir: "data/raw/translations"
+    formats: ["txt", "csv", "docx", "pdf"]
+    # How parallel text is structured
+    alignment_mode: "paragraph"      # "sentence", "paragraph", or "document"
+    separator: null                  # Character separating L1/L2 in same file, if applicable
+    output: "data/processed/parallel_corpus"
+
+  transcriptions:
+    input_dir: "data/raw/transcriptions"
+    formats: ["txt", "csv", "docx"]
+    # Whether transcriptions include translations
+    bilingual: true
+    output: "data/processed/parallel_corpus"
+
+ocr:
+  input_dir: "data/raw/scans"
+  output_dir: "data/processed/ocr_output"
+  formats: ["pdf", "png", "jpg", "jpeg", "tiff"]
+  engine: "tesseract"
+  # Tesseract language codes for the source language side
+  # For indigenous languages not in Tesseract, use the closest available + manual correction
+  tesseract_lang: "spa"             # Spanish side; adjust if scans are in target language
+  dpi: 300
+  preprocessing:
+    deskew: true
+    denoise: true
+    binarize: true
+
+transcription:
+  input_dir: "data/raw/audio"
+  output_dir: "data/processed/audio_transcriptions"
+  formats: ["wav", "mp3", "flac", "ogg", "m4a"]
+  engine: "whisper"
+  whisper_model: "large-v3"         # "tiny", "base", "small", "medium", "large-v3"
+  # Whisper language hint — use Spanish if the audio contains Spanish speech
+  # For indigenous language audio, set to null and let Whisper detect
+  language_hint: null
+  # Whether to attempt word-level timestamps
+  word_timestamps: true
+
+alignment:
+  # Sentence alignment strategy for parallel texts
+  method: "length_ratio"            # "length_ratio", "bleualign", "vecalign"
+  # Length ratio method parameters
+  length_ratio:
+    max_ratio: 2.0                  # Max length ratio between aligned sentences
+    min_length: 3                   # Minimum sentence length (characters)
+  # Sentence splitting
+  sentence_splitter:
+    source_lang: "es"               # spaCy model for source language
+    target_lang: "rule_based"       # "rule_based" for languages without spaCy models
+    # Rule-based splitter settings
+    sentence_endings: [".","!","?"]
+    abbreviations: []               # Common abbreviations that DON'T end sentences
+
+cleaning:
+  # Text normalization
+  normalize_unicode: true           # NFC normalization
+  strip_whitespace: true
+  lowercase: false                  # Generally keep original case
+  remove_duplicates: true
+  min_sentence_length: 5            # Characters
+  max_sentence_length: 500          # Characters
+  # Language-specific character whitelist (set to null to skip)
+  # Add characters specific to the target language's orthography
+  target_char_whitelist: null       # e.g., "abcdefghijklmnñopqrstuvwxyzáéíóú'"
+
+formatting:
+  output_dir: "data/training"
+  # Train/val/test split ratios
+  split:
+    train: 0.9
+    val: 0.05
+    test: 0.05
+  # Random seed for reproducible splits
+  seed: 42
+  # Training task distribution (weights for sampling)
+  task_weights:
+    translation_to_source: 0.30      # L1 → Spanish
+    translation_to_target: 0.30      # Spanish → L1
+    dictionary_lookup: 0.15          # Word meaning queries
+    grammar_explanation: 0.10        # Grammar analysis
+    morphological_analysis: 0.05     # Morphological breakdown
+    monolingual_completion: 0.10     # Text completion in L1
+  # System prompts (use {LANG} as placeholder for language name)
+  system_prompts:
+    translation: "You are a linguistic expert and translator for {LANG}, an indigenous language. Provide accurate translations and explain any notable linguistic features when relevant."
+    dictionary: "You are a lexicographer specializing in {LANG}. Provide detailed word definitions, usage examples, and etymological notes when available."
+    grammar: "You are a descriptive linguist studying {LANG}. Explain grammatical structures, morphological patterns, and syntactic rules based on observed language data."

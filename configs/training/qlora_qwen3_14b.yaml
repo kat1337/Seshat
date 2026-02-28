@@ -1,0 +1,79 @@
+# QLoRA fine-tuning config for Qwen 3 14B
+# Recommended starting point for AMD AI MAX 395+ (128 GB unified memory)
+# Expected memory usage: ~20-30 GB for training
+
+inherit: "../base.yaml"
+
+model:
+  name: "Qwen/Qwen3-14B"
+  # Alternative models to try (uncomment to switch):
+  # name: "Qwen/Qwen3-8B"           # Lighter, faster training
+  # name: "Qwen/Qwen3-32B"          # Better quality, more memory
+  revision: "main"
+  trust_remote_code: true
+
+quantization:
+  load_in_4bit: true
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_compute_dtype: "bfloat16"
+  bnb_4bit_use_double_quant: true
+
+lora:
+  r: 64                              # LoRA rank — higher = more capacity, more memory
+  lora_alpha: 128                    # Usually 2x rank
+  lora_dropout: 0.05
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  bias: "none"
+  task_type: "CAUSAL_LM"
+
+training:
+  output_dir: "models/adapters/qwen3-14b-seshat"
+  num_train_epochs: 3
+  per_device_train_batch_size: 2     # Adjust based on available memory
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 8     # Effective batch size = 2 * 8 = 16
+  gradient_checkpointing: true       # Essential for memory savings
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  max_seq_length: 2048               # Reduce to 1024 if memory constrained
+  fp16: false
+  bf16: true                         # Use bfloat16 if supported
+  logging_steps: 10
+  eval_strategy: "steps"
+  eval_steps: 200
+  save_strategy: "steps"
+  save_steps: 200
+  save_total_limit: 3
+  seed: 42
+  dataloader_num_workers: 4
+  # For AMD ROCm — if GPU not detected, falls back to CPU
+  # no_cuda: false                   # Uncomment to force CPU training
+
+data:
+  train_file: "data/training/train.jsonl"
+  val_file: "data/training/val.jsonl"
+  test_file: "data/training/test.jsonl"
+  # Chat template to use (match the base model's expected format)
+  chat_template: "qwen"             # "qwen", "chatml", "llama", "auto"
+
+evaluation:
+  metrics: ["bleu", "chrf", "perplexity"]
+  # Held-out translation pairs for evaluation
+  test_translation_pairs: "data/training/test.jsonl"
+  # Number of generation samples for qualitative review
+  num_generation_samples: 50
+
+tracking:
+  backend: "mlflow"                  # "mlflow" or "wandb"
+  experiment_name: "seshat-qwen3-14b"
+  log_model: false                   # Don't log full model to tracking server

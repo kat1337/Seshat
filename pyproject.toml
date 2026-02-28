@@ -1,0 +1,93 @@
+[project]
+name = "seshat"
+version = "0.1.0"
+description = "Low-resource language fine-tuning toolkit for large language models"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    # Core ML
+    "torch>=2.2.0",
+    "transformers>=4.40.0",
+    "peft>=0.10.0",
+    "bitsandbytes>=0.43.0",
+    "accelerate>=0.28.0",
+    "sentencepiece>=0.2.0",
+    "safetensors>=0.4.0",
+    "datasets>=2.18.0",
+
+    # Data processing
+    "pandas>=2.2.0",
+    "polars>=0.20.0",
+    "pydantic>=2.6.0",
+    "pyyaml>=6.0",
+    "rich>=13.7.0",
+
+    # NLP
+    "spacy>=3.7.0",
+    "sacrebleu>=2.4.0",
+
+    # Evaluation & tracking
+    "mlflow>=2.11.0",
+
+    # CLI & utils
+    "click>=8.1.0",
+    "structlog>=24.1.0",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+ocr = [
+    "pytesseract>=0.3.10",
+    "pdf2image>=1.17.0",
+    "Pillow>=10.2.0",
+]
+audio = [
+    "openai-whisper>=20231117",
+    # Alternative: "faster-whisper>=1.0.0",
+]
+ui = [
+    "gradio>=4.20.0",
+]
+inference = [
+    "llama-cpp-python>=0.2.55",
+]
+training-unsloth = [
+    "unsloth[colab-new]>=2024.3",
+]
+training-axolotl = [
+    "axolotl>=0.4.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "ipykernel>=6.29.0",
+    "jupyter>=1.0.0",
+    "notebook>=7.1.0",
+]
+all = [
+    "seshat[ocr,audio,ui,inference,dev]",
+]
+
+[project.scripts]
+seshat = "seshat.cli:main"
+
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "A", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

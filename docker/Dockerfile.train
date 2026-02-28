@@ -1,0 +1,39 @@
+# Seshat Training Dockerfile
+# Supports both ROCm (AMD) and CUDA (NVIDIA) backends
+#
+# Build for AMD:
+#   docker build -f docker/Dockerfile.train -t seshat-train --build-arg BASE=rocm/pytorch:latest .
+#
+# Build for NVIDIA:
+#   docker build -f docker/Dockerfile.train -t seshat-train --build-arg BASE=pytorch/pytorch:2.2.0-cuda12.1-cudnn8-devel .
+#
+# Run (AMD):
+#   docker run -it --device=/dev/kfd --device=/dev/dri --group-add video \
+#     -v $(pwd):/workspace -v $(pwd)/models:/workspace/models seshat-train
+
+ARG BASE=rocm/pytorch:latest
+FROM ${BASE}
+
+WORKDIR /workspace
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    tesseract-ocr \
+    tesseract-ocr-spa \
+    poppler-utils \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python dependencies
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e ".[all]"
+
+# SpaCy model
+RUN python -m spacy download es_core_news_sm
+
+# Copy project
+COPY . .
+
+ENTRYPOINT ["python", "-m"]
+CMD ["seshat.training.train", "--config", "configs/training/qlora_qwen3_14b.yaml"]

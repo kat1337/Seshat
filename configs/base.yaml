@@ -1,0 +1,26 @@
+# Seshat base configuration
+# Language-agnostic defaults — override per-language in your training config
+
+project:
+  name: seshat
+  version: "0.1.0"
+
+language:
+  # Override these for your target language
+  target_name: "target_language"         # Human-readable name
+  target_code: "xx"                      # ISO 639-3 code if available, or custom
+  source_name: "Spanish"
+  source_code: "es"
+  # If target language has known related languages, list them for cross-lingual transfer
+  related_languages: []
+
+paths:
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  data_training: "data/training"
+  models_base: "models/base"
+  models_adapters: "models/adapters"
+
+logging:
+  level: "INFO"
+  format: "structured"  # "structured" or "plain"

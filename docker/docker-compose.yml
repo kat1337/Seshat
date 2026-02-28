@@ -1,0 +1,29 @@
+services:
+  train:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+      args:
+        BASE: rocm/pytorch:latest
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    group_add:
+      - video
+    volumes:
+      - ..:/workspace
+      - ../models:/workspace/models
+      - ../data:/workspace/data
+    shm_size: "16gb"
+    command: ["seshat.training.train", "--config", "configs/training/qlora_qwen3_14b.yaml"]
+
+  demo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    ports:
+      - "7860:7860"
+    volumes:
+      - ..:/workspace
+      - ../models:/workspace/models
+    command: ["seshat.ui.app"]
